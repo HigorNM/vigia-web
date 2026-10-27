@@ -1,0 +1,383 @@
+<?php
+
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+
+    session_start(); 
+
+    require "config.php";
+
+    if ($_SESSION['idUser'] == ""){
+        header("Location: login.php");
+        exit;
+    }else{
+
+        $id = $_SESSION["idUser"];
+
+        $sql = "SELECT nome FROM user WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+
+        $resultado = $stmt->get_result();
+
+        $usuario = $resultado->fetch_assoc();
+
+        $nomeU = $usuario["nome"];
+
+        $erro = "";
+        $sucesso = "";
+
+        $nomeP = "";
+        $data = "";
+        $local = "";
+        $especie = "";
+        $umidade = 67;
+        $luz = 69;
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+            $nomeP = trim($_POST['nomeP']);
+            $data = $_POST['data'];
+            $local = trim($_POST['local']);
+            $especie = $_POST['especie'];
+
+            $nomeArquivo = time() . "_" . $_FILES["foto"]["name"];
+            $arquivoTemp = $_FILES["foto"]["tmp_name"];
+
+            $foto = "images/" . $nomeArquivo;
+
+            move_uploaded_file($arquivoTemp, $foto);
+
+            
+
+    // VALIDAÇÃO
+            if (empty($nomeP)) {
+                $erro .= "O nome da planta é obrigatório<br>";
+            }
+            if (empty($data)) {
+                $erro .= "A data do plantio da planta é obrigatória<br>";
+            }
+            if (empty($local)) {
+                $erro .= "O local da planta é obrigatório<br>";
+            }
+         if (empty($especie)) {
+                $erro .= "A especie da planta é obrigatória<br>";
+            }
+            if (empty($foto)) {
+                $erro .= "Uma foto da planta é obrigatória<br>";
+            }
+
+    // PROCESSAMENTO
+            if ($erro == "") {
+
+               $sql = "INSERT INTO planta (nome, especie, localizacao, dataPlantio, foto, umidade, luz, userId) VALUES ('$nomeP', '$especie', '$local', '$data', '$foto', '$umidade', '$luz', '$id')";
+
+                /*$stmt*/
+                $executaQuery = $conn->query($sql);
+
+                if ($executaQuery) {
+                    $sucesso = "Usuário cadastrado com sucesso!";
+                   //limpar os campos
+                    $nomeP = "";
+                    $especie = "";
+                    $local = "";
+                    $data = "";
+                    $foto = "";
+
+               } else {
+               $erro = "Erro ao cadastrar usuario";
+                }
+            }
+        }
+    }
+?>
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vigia Planta</title>
+    <link rel="stylesheet" href="CSS/style-home.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="images/sempre/Favicom.png" type="image/png">
+</head>
+<body>
+    <div class="background-pattern"></div>
+    
+    <!-- Sidebar Menu -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="images/sempre/Favicom.png" height="30px">
+            <h3>Vigia Planta</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="Home.php" class="sidebar-link">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="#" class="sidebar-link active">
+                <i class="fas fa-seedling"></i>
+                <span>Minhas Plantas</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-chart-pie"></i>
+                <span>Estatísticas</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fa-regular fa-credit-card"></i>
+                <span>Assinatura</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendário</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info-sidebar">
+                <img src="https://ui-avatars.com/api/?background=2E7D32&color=fff&name=Usuário+S&bold=true" alt="Avatar">
+                <div>
+                    <p><?=$nomeU?></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay para mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Conteúdo principal -->
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="top-actions">
+                <img src="images/sempre/LogoSemFundo.png" height="60rem">
+                <button class="notifications-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?background=4CAF50&color=fff&name=Usuário+S&bold=true&length=2" alt="Perfil">
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Hero Section -->
+            <div  class="hero-card" id="hero-card">
+                <div class="hero-card-header">
+                    <h1>Suas Plantas 🍂:</h1>
+                    <div class="hero-card-header-btns">
+                        <button class="action-btn">
+                            <i class="fa-solid fa-list"></i>
+                            <span>Ordenar por: Atenção</span>
+                        </button>
+                        <button class="action-btn" id="nova-planta-btn">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Nova Planta</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="metrics-grid">
+
+                    <?php
+
+                    $sql = "SELECT * FROM planta WHERE userId = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("i", $id);
+                    $stmt->execute();
+
+                    $resultado = $stmt->get_result();
+
+                        while ($linha = $resultado->fetch_assoc()){
+
+                        //<div class="plant-item urgent">
+                        //<div class="plant-item warning">
+
+                            echo "<div class='plant-item'>";
+                                echo "<div class='plant-preview'>";
+                                    echo "<img src=' " . $linha['foto'] . " '<br>>";
+                                echo "</div>";
+                                echo "<h4>" . $linha['nome'] . "</h4>";
+                                echo "<p>Nível de Umidade:</p>";
+                                echo "<div class='progress-bar'>";
+                                  echo "<div class='water-progress' style='width: " . $linha['umidade'] . "%'></div>";
+                                echo "</div>";
+                                    echo "<p>Nível de luz Solar</p>";
+                                echo "<div class='progress-bar'>";
+                                   echo "<div class='sun-progress' style='width: " . $linha['luz'] . "%'></div>";
+                                echo "</div>";
+                                echo "<div class='plant-actions'>";
+
+                                echo "<a class='btn-edit' href='editar.php?idP=" . $linha['id'] . "'> ✏️ Editar </a>";
+
+                                echo "<a class='btn-delete' href='excluir.php?idP=" . $linha['id'] . "' onclick='return confirm(\"Tem certeza que deseja excluir esta planta?\")'>🗑️ Excluir </a>";
+
+                                echo "</div>";
+                                echo "</div>";
+
+                        };
+
+                    ?>
+                </div>
+            </div>
+
+            <div class="cad-planta hidden-card" id="cad-planta">
+                <div class="hero-card-header">
+                    <div class="header-title-section">
+                        <i class="fas fa-seedling"></i>
+                        <div>
+                            <h1>Nova Planta</h1>
+                            <p>Adicione uma planta ao seu jardim</p>
+                        </div>
+                    </div>
+                    <div class="hero-card-header-btns">
+                        <button class="action-btn" id="voltar-home-btn">
+                            <i class="fa-regular fa-circle-left"></i>
+                            <span>Voltar</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <form id="cadastro-planta-form" method="POST" enctype="multipart/form-data">
+                    <div class="form-two-columns">
+                        <!-- Coluna da esquerda - Foto -->
+                        <div class="form-column photo-column">
+                            <div class="photo-upload-wrapper">
+                                <div class="photo-preview" id="photoPreview" onclick="document.getElementById('photoInput').click()">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span>Foto da planta</span>
+                                        <small>Clique para adicionar</small>
+                                    </div>
+                                </div> 
+                                
+                                <input type="file" id="photoInput" class="photo-input" accept="image/*" style="display: none;" name="foto" required>
+                                
+                                <div class="photo-actions">
+                                    <button type="button" class="camera-photo-btn" onclick="document.getElementById('photoInput').click()">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Câmera</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna da direita - Dados da planta -->
+                        <div class="form-column data-column">
+                            <div class="input-group">
+                                <label class="input-label">
+                                    <i class="fas fa-font"></i>
+                                    Nome da Planta
+                                </label>
+                                <input type="text" class="input-field" placeholder="Ex: Cronton (Externo)" required name="nomeP">
+                                <span class="input-hint">Dê um nome <b>único</b> para identificar sua planta</span>
+                            </div>
+
+                            <div class="input-group">
+                                <label class="input-label">
+                                    <i class="fas fa-tag"></i>
+                                    Espécie
+                                </label>
+                                <div class="select-wrapper">
+                                    <select class="input-field select-field" required name="especie">
+                                        <option value="" disabled selected>Selecione a espécie</option>
+                                        <optgroup label="🌿 Plantas Folhagens">
+                                            <option value="podocarpo">Podocarpo</option>
+                                            <option value="costela de adao">Costela de Adão</option>
+                                            <option value="croton">Croton</option>
+                                            <option value="lirio">Lírio da Paz</option>
+                                        </optgroup>
+                                        <optgroup label="🌵 Suculentas e Cactos">
+                                            <option value="cacto">Cacto</option>
+                                            <option value="suculenta">Suculenta</option>
+                                        </optgroup>
+                                        <optgroup label="🌸 Flores">
+                                            <option value="rosa">Rosa</option>
+                                        </optgroup>
+                                    </select>
+                                    <div class="select-arrow">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label class="input-label">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    Localização
+                                </label>
+                                <input type="text" class="input-field" placeholder="Ex: Sala, Varanda, Jardim" name="local">
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group half">
+                                    <label class="input-label">
+                                        <i class="fas fa-calendar"></i>
+                                        Data de Plantio
+                                    </label>
+                                    <input type="date" class="input-field" name="data">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Botões de ação -->
+                    <div class="form-actions">
+                        <button type="submit" class="submit-plant-btn">
+                            <i class="fas fa-save"></i>
+                            Salvar Planta
+                        </button>
+                    </div>
+                </form>
+            </div>
+            </div>
+
+            <script>
+                const menuToggle = document.getElementById('menuToggle');
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                const novaPlantaBtn = document.getElementById('nova-planta-btn');
+                const heroCard = document.getElementById('hero-card');
+                const cadCard = document.getElementById('cad-planta');
+                const voltarToHeroBtn = document.getElementById('voltar-home-btn');
+                
+                let showHero = true;
+
+                function toggleCad() {
+                    if (showHero === true) {
+                        heroCard.classList.add('hidden-card');
+                        cadCard.classList.remove('hidden-card');
+                        showHero = false;
+                    } else {
+                        cadCard.classList.add('hidden-card');
+                        heroCard.classList.remove('hidden-card');
+                        showHero = true;
+                    }
+                }
+
+                function toggleSidebar() {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+                }
+
+                menuToggle.addEventListener('click', toggleSidebar);
+                overlay.addEventListener('click', toggleSidebar);
+                novaPlantaBtn.addEventListener('click', toggleCad);
+                voltarToHeroBtn.addEventListener('click', toggleCad);
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                        toggleSidebar();
+                    }
+                });
+            </script>
+    </body>
+</html>

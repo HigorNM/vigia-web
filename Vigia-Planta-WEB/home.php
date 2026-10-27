@@ -1,0 +1,235 @@
+<?php
+
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+
+    session_start(); 
+
+    require "config.php";
+
+    if ($_SESSION['idUser'] == ""){
+        header("Location: login.php");
+        exit;
+    }else{
+
+        $id = $_SESSION["idUser"];
+
+        $sql = "SELECT nome FROM user WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+
+        $resultado = $stmt->get_result();
+
+        $usuario = $resultado->fetch_assoc();
+
+        $nomeU = $usuario["nome"];
+
+        $sql = "SELECT * FROM planta WHERE userId = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+
+        $resultado = $stmt->get_result();
+
+        $linhas = $resultado->num_rows;
+
+    }
+
+?>
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vigia Planta</title>
+    <link rel="stylesheet" href="CSS/style-home.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="images/sempre/Favicom.png" type="image/png">
+</head>
+<body>
+    <div class="background-pattern"></div>
+    
+    <!-- Sidebar Menu -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="images/sempre/Favicom.png" height="30px">
+            <h3>Vigia Planta</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-link active">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="Minhas Plantas.php" class="sidebar-link">
+                <i class="fas fa-seedling"></i>
+                <span>Minhas Plantas</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-chart-pie"></i>
+                <span>Estatísticas</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fa-regular fa-credit-card"></i>
+                <span>Assinatura</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendário</span>
+            </a>
+        </nav>
+        <a href="sair.php" class="btn-delete">SAIR</a>
+
+
+        <div class="sidebar-footer">
+            <div class="user-info-sidebar">
+                <img src="https://ui-avatars.com/api/?background=2E7D32&color=fff&name=Usuário+S&bold=true" alt="Avatar">
+                <div>
+                    <p><?=$nomeU?></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay para mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Conteúdo principal -->
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="top-actions">
+                <img src="images/sempre/LogoSemFundo.png" height="60rem">
+                <button class="notifications-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?background=4CAF50&color=fff&name=Usuário+S&bold=true&length=2" alt="Perfil">
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Hero Section -->
+            <div class="hero-card">
+                <div class="hero-content">
+                    <h1>Olá, <?=$nomeU?>! 🌿</h1>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon green-bg">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3><?= $linhas?></h3>
+                            <p>Plantas no total</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon blue-bg">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>0</h3>
+                            <p>Precisam de água</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon orange-bg">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>70%</h3>
+                            <p>Nível de luz solar média</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon purple-bg">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>0</h3>
+                            <p>Tarefas hoje</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plantas em Destaque -->
+            <div class="plants-section">
+                <div class="section-header">
+                    <h2>🌱 Plantas que precisam de atenção</h2>
+                    <a href="Minhas Plantas.php" class="view-all">Ver todas <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="plants-carousel">
+                    <!-- <div class="plant-item urgent">
+                        <div class="plant-preview">
+                            <img src="images/podocarpo.jpg">
+                            <div class="plant-overlay">
+                            </div>
+                        </div>
+                        <h4>Podo Carpus (Externo)</h4>
+                        <p>Nível de Umidade:</p>
+                        <div class="progress-bar">
+                            <div class="water-progress" style="width: 20%"></div>
+                        </div>
+                    </div>
+                     <div class="plant-item warning">
+                        <div class="plant-preview">
+                            <img src="images/podocarpo2.jpg">
+                        </div>
+                        <h4>Podo Carpus (Interno)</h4>
+                        <p>Nível de Umidade:</p>
+                        <div class="progress-bar">
+                            <div class="water-progress" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div class="plant-item">
+                        <div class="plant-preview">
+                            <img src="images/croton.jpg">
+                        </div>
+                        <h4>Croton</h4>
+                        <p>Nível de Umidade:</p>
+                        <div class="progress-bar">
+                            <div class="water-progress" style="width: 60%"></div>
+                        </div>
+                    </div> -->
+                    
+                </div>
+            </div>
+
+            <!-- Insights e Recomendações -->
+            
+
+
+
+    <script>
+        // Menu toggle para mobile
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        // Fechar ao pressionar ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                toggleSidebar();
+            }
+        });
+    </script>
+</body>
+</html>
